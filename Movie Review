@@ -1,0 +1,64 @@
+import numpy as np # linear algebra
+import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
+from sklearn.decomposition import PCA # Principal Component Analysis module
+from sklearn.cluster import KMeans # KMeans clustering 
+import matplotlib.pyplot as plt # Python defacto plotting library
+import seaborn as sns # More snazzy plotting library
+%matplotlib inline 
+df = pd.read_csv('movie_metadata.csv')
+df.info()
+str_list = [] # empty list to contain columns with strings (words)
+for colname, colvalue in df.iteritems():
+    if type(colvalue[1]) == str:
+         str_list.append(colname)
+# Get to the numeric columns by inversion             
+num_list = df.columns.difference(str_list)#num_list=df.columns-str_list difference 
+num_list
+df.columns
+str_list
+df.head()
+movie_num = df[num_list]
+#del movie # Get rid of movie df as we won't need it now
+movie_num.head()
+movie_num = movie_num.fillna(value=0, axis=1)
+X = movie_num.values
+# Data Normalization
+from sklearn.preprocessing import StandardScaler
+X_std = StandardScaler().fit_transform(X)
+X_std
+df.plot(y= 'imdb_score', x ='duration',
+           kind='hexbin',gridsize=35, sharex=False, 
+           colormap='cubehelix', title='Hexbin of Imdb_Score and Duration')
+df.plot(y= 'imdb_score', x ='gross',
+           kind='hexbin',gridsize=45, sharex=False, 
+           colormap='cubehelix', title='Hexbin of Imdb_Score and Gross')
+           f, ax = plt.subplots(figsize=(8, 8))
+plt.title('Pearson Correlation of Movie Features')
+# Draw the heatmap using seaborn
+sns.heatmap(movie_num.astype(float).corr(),linewidths=0.25,vmax=1.0, square=True, cmap="YlGnBu",linecolor='Black')
+X_std.T
+X_std
+mean_vector=np.mean(X_std)
+mean_vector
+cov_std=np.cov(X_std.T)
+cov_std
+eig_values,eig_vectors = np.linalg.eig(cov_std)
+eig_values
+eig_vectors
+eig_pairs = [ (np.abs(eig_values[i]),eig_vectors[:,i]) for i in range(len(eig_values))]
+eig_pairs
+eig_pairs.sort(key=lambda x:x[0],reverse= True)
+eig_pairs
+total_eig_values=sum(eig_values)
+total_eig_values
+variance_individual=[(i/total_eig_values)*100 for i in sorted(eig_values, reverse= True)]
+variance_individual
+cumulative_eig_values=np.cumsum(variance_individual)
+cumulative_eig_values
+plt.figure(figsize = (8,5))
+plt.bar(range(16),variance_individual,alpha=0.9 ,align='center',label='individual explain variance',color ='g')
+plt.step(range(16), cumulative_eig_values, where ='mid', label='cumulative explain variance')
+plt.ylabel('explain variance ratio')
+plt.xlabel('principal components')
+plt.legend(loc='best')
+plt.show()
